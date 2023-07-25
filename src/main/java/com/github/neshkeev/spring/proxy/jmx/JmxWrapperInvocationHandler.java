@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import javax.management.*;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.*;
 import java.util.*;
 
@@ -121,16 +122,19 @@ public class JmxWrapperInvocationHandler implements InvocationHandler {
 
             for (int i = 0; i < candidate.getParameterCount(); i++) {
                 final Object jmxParam = params[i];
-                final Parameter classParam = candidate.getParameters()[i];
+                final Parameter methodParam = candidate.getParameters()[i];
+
+                final var primitiveJmxType = MethodType.methodType(jmxParam.getClass()).unwrap().returnType();
+                final var methodParamType = methodParam.getType();
 
                 var value = jmxParam;
-                if (!jmxParam.getClass().equals(classParam.getType())) {
+                if (jmxParam.getClass() != methodParamType && primitiveJmxType != methodParamType) {
                     if (!jmxParam.getClass().equals(String.class)) {
                         match = false;
                         break;
                     }
 
-                    value = objectMapper.readValue(jmxParam.toString(), classParam.getType());
+                    value = objectMapper.readValue(jmxParam.toString(), methodParamType);
                 }
                 callArgs.add(value);
             }
