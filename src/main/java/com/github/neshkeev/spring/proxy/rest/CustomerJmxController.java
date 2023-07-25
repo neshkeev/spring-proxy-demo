@@ -2,12 +2,10 @@ package com.github.neshkeev.spring.proxy.rest;
 
 import com.github.neshkeev.spring.proxy.jmx.JmxExporter;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.*;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @SuppressWarnings("unused")
 @Component
@@ -19,6 +17,10 @@ public class CustomerJmxController {
         this.customers = new HashMap<>();
     }
 
+    public void addObject(Customer customer) {
+        customers.put(customer.id(), customer);
+    }
+
     public void add(Integer id, String name) {
         customers.put(id, new Customer(id, name, true));
     }
@@ -27,7 +29,15 @@ public class CustomerJmxController {
         return customers.get(id).toString();
     }
 
-    public Collection<String> list() {
-        return customers.values().stream().map(Customer::toString).collect(Collectors.toList());
+    public Customer get1(Integer id) {
+        return customers.get(id);
+    }
+
+    public Map<Integer, Customer> map() {
+        return customers;
+    }
+
+    public Collection<Customer> list() {
+        return customers.values();
     }
 }
