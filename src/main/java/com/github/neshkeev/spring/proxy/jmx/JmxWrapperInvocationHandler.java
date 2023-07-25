@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import javax.management.*;
 import java.lang.reflect.*;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class JmxWrapperInvocationHandler implements InvocationHandler {
     private final Object bean;
@@ -40,7 +39,7 @@ public class JmxWrapperInvocationHandler implements InvocationHandler {
 
         final var constructors = new MBeanConstructorInfo[0];
         return new MBeanInfo(this.getClass().getName(),
-                "",
+                this.getClass().getName(),
                 new MBeanAttributeInfo[0],
                 constructors,
                 operations,
@@ -75,6 +74,29 @@ public class JmxWrapperInvocationHandler implements InvocationHandler {
         final var actionName = (String) args[0];
         final var params = (Object[]) args[1];
 
+        final List<Method> candidates = getCandidateMethods(actionName);
+
+        final MethodWithArgs methodWithArgs = getSuitableMethod(params, candidates);
+
+        if (methodWithArgs == null) {
+            throw new NoSuchMethodException(
+                    "No methods %s can be invoked in %s because no method with a matching signature found"
+                            .formatted(actionName, bean.getClass())
+            );
+        }
+
+        final var result = methodWithArgs.proceed(bean);
+
+        return augmentResult(result);
+    }
+
+    record MethodWithArgs(Method method, Object[] args) {
+        Object proceed(Object target) throws ReflectiveOperationException {
+            return method.invoke(target, args);
+        }
+    }
+
+    private List<Method> getCandidateMethods(String actionName) throws NoSuchMethodException {
         final var candidates = new ArrayList<Method>();
         for (Method method : bean.getClass().getMethods()) {
             if (method.getName().equals(actionName)) {
@@ -85,25 +107,13 @@ public class JmxWrapperInvocationHandler implements InvocationHandler {
         if (candidates.isEmpty()) {
             throw new NoSuchMethodException("The " + actionName + " method doesn't exist in " + bean.getClass());
         }
-
-        List<Object> callArgs = new ArrayList<>(params.length);
-
-        final var objectMapper = new ObjectMapper();
-        final Method declaredMethod = getSuitableMethod(params, candidates, callArgs, objectMapper);
-
-        if (declaredMethod == null) {
-            throw new NoSuchMethodException(
-                    "No methods %s can be invoked in %s because no method with a matching signature found"
-                            .formatted(actionName, bean.getClass())
-            );
-        }
-
-        final var result = declaredMethod.invoke(bean, callArgs.toArray());
-
-        return augmentResult(result);
+        return candidates;
     }
 
-    private static Method getSuitableMethod(Object[] params, ArrayList<Method> candidates, List<Object> callArgs, ObjectMapper objectMapper) throws JsonProcessingException {
+    private static MethodWithArgs getSuitableMethod(Object[] params, List<Method> candidates) throws JsonProcessingException {
+        final List<Object> callArgs = new ArrayList<>(params.length);
+
+        final var objectMapper = new ObjectMapper();
         for (Method candidate : candidates) {
             if (candidate.getParameterCount() != params.length) continue;
 
@@ -125,7 +135,9 @@ public class JmxWrapperInvocationHandler implements InvocationHandler {
                 callArgs.add(value);
             }
 
-            if (match) return candidate;
+            if (match) {
+                return new MethodWithArgs(candidate, callArgs.toArray());
+            }
 
             callArgs.clear();
         }
@@ -157,17 +169,12 @@ public class JmxWrapperInvocationHandler implements InvocationHandler {
         return new ObjectMapper().writeValueAsString(result);
     }
 
-    private static<T> List<String> collectObjects(Collection<T> collection) {
+    private static<T> List<String> collectObjects(Collection<T> collection) throws JsonProcessingException {
+        var result = new ArrayList<String>(collection.size());
         final var objectMapper = new ObjectMapper();
-        return collection.stream()
-                .map(e -> {
-                    try {
-                        return objectMapper.writeValueAsString(e);
-                    }
-                    catch (JsonProcessingException ex) {
-                        throw new RuntimeException(ex);
-                    }
-                })
-                .collect(Collectors.toList());
+        for (T element : collection) {
+            result.add(objectMapper.writeValueAsString(element));
+        }
+        return result;
     }
 }
