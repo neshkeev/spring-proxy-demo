@@ -2,23 +2,35 @@ package com.github.neshkeev.spring.proxy.jmx;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.stereotype.Service;
 
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
 import java.util.*;
 
-final class MBeanInvocable {
-    private final Object target;
-    private final Method method;
-    private final Object[] args;
+@Service
+public class MBeanInvocable {
 
-    public MBeanInvocable(Object target, String methodName, Object[] params) throws NoSuchMethodException, JsonProcessingException {
-        this.target = target;
-        this.args = new Object[params.length];
-        this.method = prepareMethod(target, methodName, params);
+    private final ObjectMapper objectMapper;
+
+    public MBeanInvocable(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
     }
 
-    private Method prepareMethod(Object target, String methodName, Object[] params) throws NoSuchMethodException, JsonProcessingException {
+    public Object getResult(Object target, String methodName, Object[] params) throws ReflectiveOperationException, JsonProcessingException {
+        var invocable = prepareMethod(target, methodName, params);
+        var result = invocable.invoke(target);
+        return augmentResult(result);
+    }
+
+    private record PreparedInvocable(Method method, Object[] args) {
+        private Object invoke(Object target) throws ReflectiveOperationException {
+            return method.invoke(target, args);
+        }
+    }
+
+    private PreparedInvocable prepareMethod(Object target, String methodName, Object[] params) throws NoSuchMethodException, JsonProcessingException {
+        final var args = new Object[params.length];
         final var candidates = getCandidateMethods(target, methodName);
 
         for (Method candidate : candidates) {
@@ -39,15 +51,13 @@ final class MBeanInvocable {
             }
 
             if (i == candidate.getParameterCount()) {
-                return candidate;
+                return new PreparedInvocable(candidate, args);
             }
         }
         throw new NoSuchMethodException("No method matches the required signature");
     }
 
-    private static Object tryConvert(Object jmxParam, Class<?> paramType) throws JsonProcessingException {
-        final var objectMapper = new ObjectMapper();
-
+    private Object tryConvert(Object jmxParam, Class<?> paramType) throws JsonProcessingException {
         final var primitiveJmxType = MethodType.methodType(jmxParam.getClass()).unwrap().returnType();
 
         if (jmxParam.getClass() != paramType && primitiveJmxType != paramType) {
@@ -74,10 +84,6 @@ final class MBeanInvocable {
         return candidates;
     }
 
-    public Object getResult() throws ReflectiveOperationException, JsonProcessingException {
-        return augmentResult(method.invoke(target, args));
-    }
-
     private Object augmentResult(final Object result) throws JsonProcessingException {
         if (result == null) {
             return null;
@@ -99,12 +105,11 @@ final class MBeanInvocable {
             return collectObjects(((Map<?, ?>) result).entrySet());
         }
 
-        return new ObjectMapper().writeValueAsString(result);
+        return objectMapper.writeValueAsString(result);
     }
 
-    private static <T> List<String> collectObjects(Collection<T> collection) throws JsonProcessingException {
+    private <T> List<String> collectObjects(Collection<T> collection) throws JsonProcessingException {
         var result = new ArrayList<String>(collection.size());
-        final var objectMapper = new ObjectMapper();
         for (T element : collection) {
             result.add(objectMapper.writeValueAsString(element));
         }

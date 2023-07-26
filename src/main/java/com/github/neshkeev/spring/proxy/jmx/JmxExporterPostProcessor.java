@@ -2,6 +2,7 @@ package com.github.neshkeev.spring.proxy.jmx;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -12,6 +13,12 @@ import java.lang.reflect.Proxy;
 
 @Component
 public class JmxExporterPostProcessor implements BeanPostProcessor {
+    private final MBeanInvocable mBeanInvocable;
+
+    @Lazy
+    public JmxExporterPostProcessor(MBeanInvocable mBeanInvocable) {
+        this.mBeanInvocable = mBeanInvocable;
+    }
 
     @Override
     @SuppressWarnings("NullableProblems")
@@ -20,7 +27,7 @@ public class JmxExporterPostProcessor implements BeanPostProcessor {
         return bean;
     }
 
-    private static void configureProxy(Object bean, String beanName) {
+    private void configureProxy(Object bean, String beanName) {
         final Class<?> aClass = bean.getClass();
         final var annotation = aClass.getAnnotation(JmxExporter.class);
         if (annotation == null) return;
@@ -41,10 +48,10 @@ public class JmxExporterPostProcessor implements BeanPostProcessor {
         }
     }
 
-    private static DynamicMBean getDynamicMBean(Object bean) {
+    private DynamicMBean getDynamicMBean(Object bean) {
         return (DynamicMBean) Proxy.newProxyInstance(
                 JmxExporterPostProcessor.class.getClassLoader(),
                 new Class[]{DynamicMBean.class},
-                new JmxWrapperInvocationHandler(bean));
+                new JmxWrapperInvocationHandler(mBeanInvocable, bean));
     }
 }

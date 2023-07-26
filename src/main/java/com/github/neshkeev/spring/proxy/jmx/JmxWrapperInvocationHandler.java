@@ -5,9 +5,13 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 
 public class JmxWrapperInvocationHandler implements InvocationHandler {
+
+    private final MBeanInvocable mBeanInvocable;
+
     private final Object bean;
 
-    public JmxWrapperInvocationHandler(Object bean) {
+    public JmxWrapperInvocationHandler(MBeanInvocable mBeanInvocable, Object bean) {
+        this.mBeanInvocable = mBeanInvocable;
         this.bean = bean;
     }
 
@@ -39,6 +43,6 @@ public class JmxWrapperInvocationHandler implements InvocationHandler {
         final var actionName = (String) args[0];
         final var params = (Object[]) args[1];
 
-        return new MBeanInvocable(this.bean, actionName, params).getResult();
+        return mBeanInvocable.getResult(bean, actionName, params);
     }
 }
