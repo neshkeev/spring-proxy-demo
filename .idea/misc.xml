@@ -8,6 +8,9 @@
       <item index="3" class="java.lang.String" itemvalue="org.springframework.web.bind.annotation.PostMapping" />
       <item index="4" class="java.lang.String" itemvalue="org.springframework.web.bind.annotation.RestController" />
     </list>
+    <writeAnnotations>
+      <writeAnnotation name="org.springframework.beans.factory.annotation.Autowired" />
+    </writeAnnotations>
   </component>
   <component name="ExternalStorageConfigurationManager" enabled="true" />
   <component name="MavenProjectsManager">
