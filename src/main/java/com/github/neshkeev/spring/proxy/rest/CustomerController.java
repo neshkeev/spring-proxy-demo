@@ -16,14 +16,14 @@ public class CustomerController {
         this.customers = new HashMap<>();
     }
 
-    @PostMapping("/customers")
-    public void add(@RequestBody Customer customer) {
-        customers.put(customer.id(), customer);
-    }
-
     @GetMapping("/customers/{id}")
     public Customer get(@PathVariable("id") int id) {
         return customers.get(id);
+    }
+
+    @PostMapping("/customers")
+    public void add(@RequestBody Customer customer) {
+        customers.put(customer.id(), customer);
     }
 
     @GetMapping("/customers")

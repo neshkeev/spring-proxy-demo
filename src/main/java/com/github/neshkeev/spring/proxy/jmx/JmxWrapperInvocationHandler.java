@@ -1,6 +1,9 @@
 package com.github.neshkeev.spring.proxy.jmx;
 
-import javax.management.*;
+import javax.management.MBeanAttributeInfo;
+import javax.management.MBeanConstructorInfo;
+import javax.management.MBeanInfo;
+import javax.management.MBeanNotificationInfo;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 
@@ -17,26 +20,18 @@ public class JmxWrapperInvocationHandler implements InvocationHandler {
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        switch (method.getName()) {
-            case "getAttribute", "setAttribute", "getAttributes", "setAttributes" -> {
-                return null;
-            }
-            case "getMBeanInfo" -> {
-                return new MBeanInfo(
-                        bean.getClass().getName(),
-                        bean.getClass().getName(),
-                        new MBeanAttributeInfo[0],
-                        new MBeanConstructorInfo[0],
-                        MBeanUtils.operations(bean.getClass()),
-                        new MBeanNotificationInfo[0]
-                );
-            }
-            case "invoke" -> {
-                return invoke(args);
-            }
-        }
-
-        throw new UnsupportedOperationException(method.getName());
+        return switch (method.getName()) {
+            case "getAttribute", "setAttribute", "getAttributes", "setAttributes" -> null;
+            case "getMBeanInfo" ->
+                    new MBeanInfo(bean.getClass().getName(),
+                            bean.getClass().getName(),
+                            new MBeanAttributeInfo[0],
+                            new MBeanConstructorInfo[0],
+                            MBeanUtils.operations(bean.getClass()),
+                            new MBeanNotificationInfo[0]);
+            case "invoke" -> invoke(args);
+            default -> throw new UnsupportedOperationException(method.getName());
+        };
     }
 
     private Object invoke(Object[] args) throws Exception {

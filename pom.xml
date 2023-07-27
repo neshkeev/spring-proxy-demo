@@ -10,10 +10,10 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.github.neshkeev.spring</groupId>
-    <artifactId>spring-magic</artifactId>
+    <artifactId>spring-proxy-demo</artifactId>
     <version>0.0.1-SNAPSHOT</version>
 
-    <name>spring-magic</name>
+    <name>spring-proxy-demo</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

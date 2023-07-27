@@ -1,11 +1,10 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="CustomerControllerJMXTest" type="JUnit" factoryName="JUnit" nameIsGenerated="true">
-    <module name="spring-magic" />
+    <module name="spring-proxy-demo" />
     <option name="PACKAGE_NAME" value="com.github.neshkeev.spring.proxy.rest" />
     <option name="MAIN_CLASS_NAME" value="com.github.neshkeev.spring.proxy.rest.CustomerControllerJMXTest" />
     <option name="METHOD_NAME" value="" />
     <option name="TEST_OBJECT" value="class" />
-    <option name="VM_PARAMETERS" value="-ea -Djdk.attach.allowAttachSelf=true" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>

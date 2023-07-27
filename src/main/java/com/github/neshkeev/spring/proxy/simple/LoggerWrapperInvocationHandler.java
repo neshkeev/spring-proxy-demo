@@ -8,12 +8,12 @@ import java.lang.reflect.Method;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
-public class LoggerWrapperInvocationHandler implements InvocationHandler {
+public class LoggerWrapperInvocationHandler<T> implements InvocationHandler {
     private final static Logger LOG = LoggerFactory.getLogger(LoggerWrapperInvocationHandler.class);
 
-    private final PasswordGenerator delegate;
+    private final T delegate;
 
-    public LoggerWrapperInvocationHandler(PasswordGenerator delegate) {
+    public LoggerWrapperInvocationHandler(T delegate) {
         this.delegate = delegate;
     }
 

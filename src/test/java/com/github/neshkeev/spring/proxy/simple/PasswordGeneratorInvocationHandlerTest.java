@@ -16,6 +16,7 @@ import java.lang.reflect.Proxy;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertAll;
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = PasswordGeneratorInvocationHandlerTest.PasswordGeneratorInvocationHandlerTestConfig.class)
@@ -31,6 +32,11 @@ public class PasswordGeneratorInvocationHandlerTest {
         LOG.info("The second password: {}", password2);
 
         assertThat(password1, is(not(equalTo(password2))));
+        assertAll(
+                () -> assertThat(password1, is(equalTo(passwordGenerator1.getPassword()))),
+                () -> assertThat(password1, is(not(equalTo(password2)))),
+                () -> assertThat(password2, is(equalTo(passwordGenerator2.getPassword())))
+        );
     }
 
     @TestConfiguration

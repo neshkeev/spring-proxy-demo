@@ -1,6 +1,5 @@
 package com.github.neshkeev.spring.proxy.simple;
 
-import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +16,7 @@ import java.lang.reflect.Proxy;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.emptyString;
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = LoggerWrapperInvocationHandlerTest.PasswordGeneratorInvocationHandlerTestConfig.class)
@@ -25,7 +25,7 @@ public class LoggerWrapperInvocationHandlerTest {
     public void test(@Autowired @Qualifier("loggedGenerator") PasswordGenerator passwordGenerator) {
         final var password = passwordGenerator.getPassword();
 
-        assertThat(password, is(not(Matchers.emptyString())));
+        assertThat(password, is(not(emptyString())));
     }
 
     @TestConfiguration
@@ -45,7 +45,7 @@ public class LoggerWrapperInvocationHandlerTest {
             final var generator = generator();
             return (PasswordGenerator) Proxy.newProxyInstance(LoggerWrapperInvocationHandlerTest.class.getClassLoader(),
                     new Class[]{PasswordGenerator.class},
-                    new LoggerWrapperInvocationHandler(generator));
+                    new LoggerWrapperInvocationHandler<>(generator));
         }
     }
 

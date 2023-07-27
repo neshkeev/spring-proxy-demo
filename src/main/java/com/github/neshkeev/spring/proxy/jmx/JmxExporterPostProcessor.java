@@ -3,6 +3,7 @@ package com.github.neshkeev.spring.proxy.jmx;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -21,13 +22,12 @@ public class JmxExporterPostProcessor implements BeanPostProcessor {
     }
 
     @Override
-    @SuppressWarnings("NullableProblems")
-    public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
-        configureProxy(bean, beanName);
+    public Object postProcessAfterInitialization(@NonNull Object bean, @NonNull String beanName) throws BeansException {
+        registerMBean(bean, beanName);
         return bean;
     }
 
-    private void configureProxy(Object bean, String beanName) {
+    private void registerMBean(Object bean, String beanName) {
         final Class<?> aClass = bean.getClass();
         final var annotation = aClass.getAnnotation(JmxExporter.class);
         if (annotation == null) return;
